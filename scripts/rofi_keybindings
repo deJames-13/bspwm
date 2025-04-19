@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+## Copyright (C) 2020-2024 Aditya Shakya <adi1090x@gmail.com>
+
+# Import Current Theme
+DIR="$HOME/.config/bspwm"
+STYLE="dej"
+RASI="$DIR/themes/$STYLE/rofi/keybindings.rasi"
+
+# Parse the sxhkdrc file to generate a clean list of keybindings
+parse_keybindings() {
+    local section=""
+    local keybind=""
+    local description=""
+    
+    # Read sxhkdrc line by line
+    while IFS= read -r line; do
+
+        # Skip empty lines and comments that aren't descriptions
+        if [[ -z $line ]] || [[ $line =~ ^#$ ]] || [[ $line =~ ^##.*$ ]]; then
+            continue
+        fi
+        
+        # Check for keybinding description lines (starting with # )
+        if [[ $line =~ ^#\ (.*)$ ]]; then
+            description="${BASH_REMATCH[1]}"
+            continue
+        fi
+        
+        # If line doesn't start with whitespace or # or is empty, it's likely a keybinding
+        if [[ ! $line =~ ^[[:space:]] ]] && [[ ! $line =~ ^# ]] && [[ -n $line ]]; then
+            keybind="$line"
+            # Output section (if exists), keybinding and description
+            if [[ -n $section ]]; then
+                echo "$section: $description → $keybind"
+            else
+                echo "$description → $keybind"
+            fi
+            # Reset description
+            description=""
+        fi
+    done < "$DIR/sxhkdrc"
+}
+
+# Generate temporary file with parsed keybindings
+KEYBINDS_FILE=$(mktemp)
+parse_keybindings > "$KEYBINDS_FILE"
+
+# Run rofi and display keybindings
+rofi \
+    -dmenu \
+    -i \
+    -p "Keybindings" \
+    -kb-accept-alt "" \
+    -kb-cancel "Escape" \
+    -theme ${RASI} \
+    < "$KEYBINDS_FILE"
+
+# Clean up temporary file
+rm "$KEYBINDS_FILE"
