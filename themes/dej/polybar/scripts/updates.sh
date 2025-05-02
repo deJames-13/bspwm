@@ -26,14 +26,15 @@ while true; do
     # when there are updates available
     # every 10 seconds another check for updates is done
     while (( UPDATES > 0 )); do
-        if (( UPDATES == 1 )); then
-            echo " $UPDATES"
-        elif (( UPDATES > 1 )); then
-            echo " $UPDATES"
+        if (( UPDATES == 20 )); then
+            echo " $UPDATES"
+        elif (( UPDATES > 20 )); then
+            echo " $UPDATES"
         else
-            echo " None"
+            # echo " None"
+            echo " "
         fi
-        sleep 10
+        sleep 300
         get_total_updates
     done
 

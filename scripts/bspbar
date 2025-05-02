@@ -5,9 +5,92 @@
 # bspwm directory
 DIR="$HOME/.config/bspwm"
 
-# fix padding
-bspc config bottom_padding 0
-bspc config top_padding 0
+# Constants
+POLYBAR_HEIGHT=24  # Adjust this to match your polybar height
+STATUS_FILE="/tmp/polybar_hidden"
 
-# launch polybar
-bash "$DIR"/themes/polybar.sh
+# Usage function
+usage() {
+    echo "Usage: $0 [command]"
+    echo "Commands:"
+    echo "  hide    - Hide polybar and remove padding"
+    echo "  show    - Show polybar and restore padding"
+    echo "  toggle  - Toggle polybar visibility"
+    echo "  restart - Restart polybar"
+    echo "  (none)  - Start polybar"
+    exit 1
+}
+
+# Function to hide polybar
+hide_polybar() {
+    polybar-msg cmd hide
+    bspc config bottom_padding 0
+    bspc config top_padding 0
+    touch "$STATUS_FILE"  # Create file to mark polybar as hidden
+}
+
+# Function to show polybar
+show_polybar() {
+    polybar-msg cmd show
+    bspc config bottom_padding 0
+    bspc config bottom_padding $POLYBAR_HEIGHT
+    rm -f "$STATUS_FILE"  # Remove file to mark polybar as visible
+}
+
+# Function to toggle polybar
+toggle_polybar() {
+    # Check if polybar is hidden by checking for status file
+    if [ -f "$STATUS_FILE" ]; then
+        show_polybar
+    else
+        hide_polybar
+    fi
+}
+
+# Function to restart polybar
+restart_polybar() {
+    polybar-msg cmd restart
+    # Ensure padding is set correctly
+    bspc config bottom_padding 0
+    bspc config top_padding $POLYBAR_HEIGHT
+}
+
+# Function to launch polybar
+launch_polybar() {
+    # fix padding initially
+    bspc config bottom_padding 0
+    bspc config top_padding $POLYBAR_HEIGHT
+    
+    # Remove status file if it exists (ensure we start in visible state)
+    rm -f "$STATUS_FILE"
+    
+    # launch polybar
+    bash "$DIR"/themes/polybar.sh
+}
+
+# Process command argument
+case "$1" in
+    hide)
+        hide_polybar
+        ;;
+    show)
+        show_polybar
+        ;;
+    toggle)
+        toggle_polybar
+        ;;
+    restart)
+        restart_polybar
+        ;;
+    help|-h|--help)
+        usage
+        ;;
+    '')
+        # No arguments, launch polybar
+        launch_polybar
+        ;;
+    *)
+        echo "Unknown command: $1"
+        usage
+        ;;
+esac

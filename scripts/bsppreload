@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+## Copyright (C) 2024 dej
+
+# List of applications to preload
+apps=(
+    "Mozilla Firefox"
+    # Add more applications as needed
+)
+
+
+# Function to preload and hide an application
+preload_app() {
+    local app="$1"
+    
+    # Launch the application in background
+    $app &
+    
+    # Get the PID of the launched application
+    local pid=$!
+    
+    # Wait for the window to appear
+    local wid=""
+    local count=0
+    local max_tries=30  # Maximum number of tries (~ 3 seconds)
+    
+    while [ -z "$wid" ] && [ $count -lt $max_tries ]; do
+        wids=$(bspc query -N -n .window)
+
+        count=$((count+1))
+        sleep 0.1
+    done
+    
+    # If window appears, hide it
+    if [ -n "$wid" ]; then
+        # Hide the window using bspwm's hidden flag
+        bspc node "$wid" -g hidden=on
+        echo "Preloaded and hid: $app"
+    else
+        echo "Failed to preload: $app (window not found)"
+    fi
+}
+
+# Main function to preload all applications
+main() {
+    echo "Starting application preloading..."
+    
+    for app in "${apps[@]}"; do
+        preload_app "$app"
+        sleep 1  # Give some time between app launches to prevent system overload
+    done
+    
+    echo "Preloading complete"
+}
+
+# Execute the main function
+main

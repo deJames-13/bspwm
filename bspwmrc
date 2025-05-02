@@ -12,6 +12,8 @@ BSPDIR="$HOME/.config/bspwm"
 ## Export bspwm/bin dir to PATH
 export PATH="${PATH}:$BSPDIR/scripts"
 export XDG_CURRENT_DESKTOP='bspwm'
+export XDG_SESSION_TYPE='x11'
+export XDG_SESSION_DESKTOP='bspwm'
 
 ## Run java applications without issues
 export _JAVA_AWT_WM_NONREPARENTING=1
@@ -108,11 +110,11 @@ declare -a code=(Geany code-oss code Code code-launcher vscode visual-studio-cod
 for i in ${code[@]}; do
    bspc rule -a $i desktop='^2' follow=on focus=on; done
 
-## 3 > web (always open web browser on workspace-2)
+## 3 > web (always open web browser on workspace-3)
 bspc rule -a firefox desktop='^3' follow=on focus=on
 bspc rule -a chromium desktop='^3' follow=on focus=on
 
-## 4 > files (always open file manager on workspace-3)
+## 4 > files (always open file manager on workspace-4)
 declare -a files=(Pcmanfm Thunar qBittorrent)
 for i in ${files[@]}; do
    bspc rule -a $i desktop='^4' follow=on focus=on; done
@@ -139,19 +141,22 @@ bspc rule -a 'VirtualBox Manager' desktop='^8' follow=on focus=on
 bspc rule -a GParted desktop='^8' follow=on focus=on
 declare -a settings=(Lxappearance Lxtask Lxrandr Arandr \
 System-config-printer.py Pavucontrol Exo-helper-1 \
-Xfce4-power-manager-settings)
+Xfce4-power-manager-settings org-tlauncher-tlauncher-rmo-TLauncher )
 for i in ${settings[@]}; do
    bspc rule -a $i desktop='^8' state=floating follow=on focus=on; done
 
 ## Always Floating Apps
 declare -a floating=(alacritty-float kitty-float Pcmanfm Thunar Onboard Yad 'Firefox:Places' \
-Viewnior feh Nm-connection-editor calamares Calamares)
+Viewnior feh Nm-connection-editor calamares Calamares Gpaste-ui)
 for i in ${floating[@]}; do
    bspc rule -a $i state=floating follow=on focus=on; done
 
 bspc rule -a Conky state=floating manage=off
 bspc rule -a stalonetray state=floating manage=off
 
+bspc rule -a Gpaste-ui state=floating follow=on focus=on 
+bspc rule -a mpv state=fullscreen follow=on focus=on desktop='^7'
+bspc rule -a Spotify state=fullscreen follow=on focus=on desktop='^7'
 ## Autostart -------------------------------------------------#
 
 # Kill if already running
@@ -179,7 +184,7 @@ xfce4-power-manager &
 xsetroot -cursor_name left_ptr
 
 # Restore wallpaper
-bash ~/.fehbg
+bash ~/.fehbg 
 
 # Start mpd
 exec mpd &
@@ -189,3 +194,4 @@ bspbar
 bspcomp
 bspdunst
 bspfloat &
+bsppreload

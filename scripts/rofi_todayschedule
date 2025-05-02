@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+
+# Get current time in seconds since epoch and today's day name
+currenttime=$(date +%s)
+today=$(date +%A)
+today_code=$(date +%a | tr '[a-z]' '[A-Z]' | cut -c1)
+
+# Path to schedule JSON file
+DIR="$HOME/.config/bspwm"
+STYLE="dej"
+RASI="$DIR/themes/$STYLE/rofi/viewschedule.rasi"
+SCHEDULE_JSON="$DIR/themes/$STYLE/schedule.json"
+
+# Check if jq is installed
+if ! command -v jq &> /dev/null; then
+    echo "jq is required but not installed. Please install jq."
+    exit 1
+fi
+
+# Check if schedule JSON exists and use example if not
+if [ ! -f "$SCHEDULE_JSON" ]; then
+    SCHEDULE_JSON="$DIR/themes/$STYLE/schedule_example.json"
+fi
+
+# Function to convert 12-hour time to 24-hour time
+to_24hour() {
+    local time=$1
+    date -d "$time" +%H:%M 2>/dev/null || echo "$time"
+}
+
+# Function to convert time to seconds since epoch
+time_to_seconds() {
+    local time=$1
+    local today_date=$(date +%Y-%m-%d)
+    date -d "$today_date $time" +%s 2>/dev/null || echo "0"
+}
+
+# Format today's schedule entries
+format_todays_entries() {
+    # Extract today's schedule sorted by time
+    local today_schedule=$(jq -r --arg day "$today" --arg code "$today_code" \
+        '.[] | select(.day == $day or .day_code == $code) | "\(.start_time),\(.subject_code),\(.description),\(.faculty),\(.room)"' \
+        "$SCHEDULE_JSON" | sort)
+    
+    local formatted=""
+    
+    # Process each entry
+    while IFS=, read -r start_time subject desc faculty room; do
+        [ -z "$start_time" ] && continue
+        
+        # Convert times to seconds for comparison
+        local event_time=$(time_to_seconds $(to_24hour "$start_time"))
+        local hhmm=$(date -d "$start_time" '+%H:%M' 2>/dev/null || echo "$start_time")
+        
+        # Format based on whether the class is past or upcoming
+        if [[ $event_time -lt $currenttime ]]; then
+            formatted+="<span color='#444444'>$hhmm  $subject  $desc  ($faculty)  [$room]</span>\n"
+        else
+            formatted+="<span color='#50fa7b'>$hhmm</span>  <b>$subject</b>  $desc  <span color='#777777'>($faculty)</span>  <span color='#bd93f9'>[$room]</span>\n"
+        fi
+    done <<< "$today_schedule"
+    
+    # If no classes today
+    if [[ -z "$formatted" ]]; then
+        formatted="<span color='#ff5555'>No classes scheduled for today ($today)</span>"
+    else
+        # Add header
+        formatted="<b><span color='#f8f8f2'>TODAY'S SCHEDULE ($today)</span></b>\n───────────────────────────────────────────────────\n$formatted"
+    fi
+    
+    echo -e "$formatted"
+}
+
+# Function to display detailed information for a selected schedule
+show_details() {
+    local selected=$1
+    
+    # Skip if header or separator selected
+    if [[ "$selected" == *"TODAY'S SCHEDULE"* || "$selected" == "───"* || -z "$selected" ]]; then
+        return
+    fi
+    
+    # Extract time from the selected entry
+    local time=$(echo "$selected" | sed -E 's/^.*([0-9]{2}:[0-9]{2}).*$/\1/')
+    local room=$(echo "$selected" | grep -o '\[.*\]' | tr -d '[]')
+    
+    # Get full details from JSON
+    local details=$(jq -r --arg time "$time" --arg room "$room" \
+        '.[] | select(.start_time | contains($time)) | select(.room == $room)' "$SCHEDULE_JSON")
+    
+    if [ -n "$details" ]; then
+        local subject=$(echo "$details" | jq -r '.subject_code')
+        local desc=$(echo "$details" | jq -r '.description')
+        local faculty=$(echo "$details" | jq -r '.faculty')
+        local section=$(echo "$details" | jq -r '.section')
+        local day=$(echo "$details" | jq -r '.day')
+        local start=$(echo "$details" | jq -r '.start_time')
+        local end=$(echo "$details" | jq -r '.end_time')
+
+        # Format details nicely
+        local info="<b>Subject:</b> $subject\n<b>Description:</b> $desc\n<b>Faculty:</b> $faculty\n<b>Section:</b> $section\n<b>Day:</b> $day\n<b>Time:</b> $start to $end\n<b>Room:</b> $room"
+        
+        # Display details using rofi
+        echo -e "$info" | rofi -dmenu -markup-rows -p "Class Details" -theme "$RASI"
+    fi
+}
+
+# Main function
+main() {
+    # Format today's schedule
+    local today_schedule=$(format_todays_entries)
+    
+    # Show schedule in rofi
+    local selected=$(echo -e "$today_schedule" | rofi -dmenu -i -markup-rows -p "Today's Classes" -theme "$RASI")
+    
+    # If a class was selected, show details
+    if [ -n "$selected" ]; then
+        show_details "$selected"
+    fi
+}
+
+# Execute main function
+main

@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Run xprop and capture the output
+xprop_output=$(xprop)
+
+# Extract the WM_CLASS information
+class_info=$(echo "$xprop_output" | grep "WM_CLASS" | sed 's/WM_CLASS(STRING) = "\(.*\)", "\(.*\)"/\1,\2/')
+class_instance=$(echo "$class_info" | cut -d ',' -f 1)
+class_name=$(echo "$class_info" | cut -d ',' -f 2)
+
+# Notify about the class name
+if command -v notify-send &> /dev/null; then
+    notify-send "Window Class" "Instance: $class_name\nClass: $class_name"
+else
+    echo "Window Class Info:"
+    echo "Instance: $class_instance"
+    echo "Class: $class_name"
+fi
+
+# Create JSON output
+echo "{" > /tmp/window_props.json
+while IFS= read -r line; do
+    if [[ $line =~ ^([^:()=]+).*=\ *(.*) ]]; then
+        key="${BASH_REMATCH[1]}"
+        value="${BASH_REMATCH[2]}"
+        # Remove trailing whitespace from key and leading whitespace from value
+        key=$(echo "$key" | sed 's/[[:space:]]*$//')
+        value=$(echo "$value" | sed 's/^[[:space:]]*//')
+        echo "  \"$key\": \"$value\"," >> /tmp/window_props.json
+    fi
+done <<< "$xprop_output"
+# Remove the last comma and close the JSON object
+sed -i '$ s/,$//' /tmp/window_props.json
+echo "}" >> /tmp/window_props.json
+
+# Output the JSON to the terminal
+echo "JSON output saved to /tmp/window_props.json"
+echo "Window class: $class_name (Instance: $class_instance)"
+cat /tmp/window_props.json

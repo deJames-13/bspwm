@@ -5,8 +5,29 @@
 ##---------- Custom ----------##
 
 # Keybinding to show all keybindings
+super + alt + c
+    code
+
+# Show clipboard
+super + v
+    gpaste-client ui &
+
+# Show school schedule
+super + shift + s
+    ~/.config/bspwm/scripts/rofi_viewschedule
+
+# Keybinding to show all keybindings
 super + k
     ~/.config/bspwm/scripts/rofi_keybindings
+
+# Get window class
+super + i
+    ~/.config/bspwm/scripts/bspgetclass
+
+# Show Polybar
+super + ctrl + b
+    ~/.config/bspwm/scripts/bspbar toggle
+
 ##---------- Keybindings for bspwm ----------##
 
 # Terminal (alacritty)

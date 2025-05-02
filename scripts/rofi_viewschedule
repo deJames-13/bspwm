@@ -1,0 +1,136 @@
+#!/usr/bin/env bash
+
+# Import Current Theme
+DIR="$HOME/.config/bspwm"
+STYLE="dej"
+RASI="$DIR/themes/$STYLE/rofi/viewschedule.rasi"
+
+SCHEDULE_JSON="$DIR/themes/$STYLE/schedule.json"
+
+# Check if jq is installed
+if ! command -v jq &> /dev/null; then
+    echo "jq is required but not installed. Please install jq."
+    exit 1
+fi
+
+refresh_schedule(){
+    echo ""
+}
+
+# Function to get today's day of week
+get_today() {
+    local today=$(date +"%A")
+    today=$(echo "$today" | awk '{print substr($0,1,3)}')
+    echo "$today"
+}
+
+
+# Function to format schedule entries for rofi in a tabulated format
+format_schedules() {
+    local schedules=$1
+    
+    # Add a header with colors and formatting
+    local header="<b><span color='#f8f8f2'>Day                       Time                                      Room                  Subject - Description (Professor)</span></b>"
+    local separator="────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────"
+
+    
+    # Parse and format each schedule entry
+    local entries=$(echo "$schedules" | jq -r '.[] | "\(.day)|\(.time_range)|\(.room)|\(.subject_code) - \(.description) (\(.faculty))"')
+    
+    # Process each entry to format columns properly
+    formatted_entries=""
+    while IFS= read -r line; do
+        IFS='|' read -r day time room subject <<< "$line"
+        # Use printf to create fixed-width columns - adjust widths as needed
+        # formatted_entries+="$(printf "%-$()s %-17s %-10s %-10s" "$day" "$time" "$room" "$subject")\n"
+
+        day=$(echo "$day" | awk '{print substr($0,1,3)}')
+        
+
+        formatted_entries+="$(printf "%*s\t" "-20" "$day")"
+        formatted_entries+="$(printf "%*s\t" "-20" "$time")"
+        formatted_entries+="$(printf "%*s\t" "-20" "$room")"
+        formatted_entries+="$(printf "%*s\t" "-20" "$subject")\n"
+
+
+
+    done <<< "$entries"
+    
+    # Combine header, separator and entries
+    echo -e "$header\n$separator\n$formatted_entries"
+}
+
+# Function to display detailed information for a selected schedule
+show_details() {
+    local selected=$1
+    
+    # Skip header and separator lines
+    if [[ "$selected" == *"Day"* || "$selected" == "────"* || -z "$selected" ]]; then
+        return
+    fi
+    
+    # Extract information from the selected line
+    # Use more reliable extraction with awk that handles spaces correctly
+    local day=$(echo "$selected" | awk '{print $1}')
+    local time=$(echo "$selected" | awk '{print $2}')
+    local room=$(echo "$selected" | awk '{print $3}')
+    
+    # Get full details from JSON
+    local details=$(jq -r ".[] | select(.day == \"$day\" and .time_range == \"$time\" and .room == \"$room\")" "$SCHEDULE_JSON")
+    
+    if [ -n "$details" ]; then
+        local subject=$(echo "$details" | jq -r '.subject_code')
+        local desc=$(echo "$details" | jq -r '.description')
+        local faculty=$(echo "$details" | jq -r '.faculty')
+        local section=$(echo "$details" | jq -r '.section')
+        local day_code=$(echo "$details" | jq -r '.day_code')
+        local start=$(echo "$details" | jq -r '.start_time')
+        local end=$(echo "$details" | jq -r '.end_time')
+
+        # Format details nicely
+        local info="<b>Subject:</b> $subject\n<b>Description:</b> $desc\n<b>Faculty:</b> $faculty\n<b>Section:</b> $section\n<b>Day:</b> $day ($day_code)\n<b>Time:</b> $start to $end\n<b>Room:</b> $room"
+        
+        # Display details using rofi
+        echo -e "$info" | rofi -dmenu -markup-rows -p "Schedule Details" -theme "$RASI"
+    fi
+}
+
+# Highlight today's classes
+highlight_today() {
+    local formatted=$1
+    local today=$(get_today)
+    if [[ "$today" == "Fri" ]]; then
+        echo "$formatted" | sed "s/^$today/<b><span color='#50fa7b'>$today <\/span><\/b>/g"
+    else
+        echo "$formatted" | sed "s/^$today/<b><span color='#50fa7b'>$today<\/span><\/b>/g"
+    fi
+}
+
+# Main function to display schedules
+main() {
+    # Check if schedule JSON exists and use example if not
+    if [ ! -f "$SCHEDULE_JSON" ]; then
+        notify-send "Updating Schedule..."
+        SCHEDULE_JSON="$DIR/themes/$STYLE/schedule.json"
+        JSON="$(python /mnt/Projects/Python/webscraping/myportal schedule --json)" 
+        echo "$JSON" | sed -n '/^\[/,$p' > "$SCHEDULE_JSON"
+    fi
+    
+    # Get all schedules sorted by day and time
+    local all_schedules=$(jq -r 'sort_by(.day_code, .time_sort)' "$SCHEDULE_JSON")
+    
+    # Format schedules for rofi display in a tabulated format
+    local formatted_schedules=$(format_schedules "$all_schedules")
+    
+    # Highlight today's classes
+    formatted_schedules=$(highlight_today "$formatted_schedules")
+    # Launch rofi with schedules
+    local selected=$(echo -e "$formatted_schedules" | rofi -dmenu -i -markup-rows -p "Class Schedules" -theme "$RASI")
+    
+    if [ -n "$selected" ]; then
+        show_details "$selected"
+    fi
+}
+
+# Execute main function
+main
