@@ -68,7 +68,7 @@ picom_shadow_r='20'
 picom_shadow_o='0.60'
 picom_shadow_x='-20'
 picom_shadow_y='-20'
-picom_blur_method='none'
+picom_blur_method='dual_kawase'
 picom_blur_strength='0'
 
 # Bspwm
@@ -77,5 +77,5 @@ bspwm_nbc="$background"
 bspwm_abc="$color5"
 bspwm_pfc="$color2"
 bspwm_border='1'
-bspwm_gap='10'
+bspwm_gap='5'
 bspwm_sratio='0.50'

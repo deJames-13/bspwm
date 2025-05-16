@@ -4,7 +4,8 @@ EWW_BIN="eww -c $HOME/.config/eww/dashboard"
 DASHBOARD_FILE="$HOME/.cache/eww_launch.dashboard"
 POLYBAR_SCRIPT="$HOME/.config/polybar/launch.sh"
 PID_FILE="/tmp/bspwindow_watch.pid"
-IDLE_TIMEOUT=10 
+IDLE_TIMEOUT=10
+last_desktop=$(bspc query -D -d focused --names)
 
 log_msg() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "/tmp/bspwindow_watch.log"
@@ -22,23 +23,112 @@ check_workspace() {
     echo "$window_count:$current_desktop"
 }
 
-idling() {}
+idling() {
+    local window_count=$(check_windows)
+    if [[ "$window_count" -eq 0 ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
 
 open_dash() {
     /home/dej/.config/bspwm/scripts/bspbar hide
     $HOME/.config/eww/dashboard/launch_dashboard
+    touch "$DASHBOARD_FILE"
+    last_desktop=$(bspc query -D -d focused --names)
 }
 close_dash() {
-    ${EWW_BIN} close-all
+    ${EWW_BIN} close-all 2>/dev/null || true
+    pkill -f "eww.*dashboard" 2>/dev/null || true
+    sleep 0.2
+    
     rm -f "$DASHBOARD_FILE"
     /home/dej/.config/bspwm/scripts/bspbar show
+    
+    log_msg "Dashboard closed (forced kill if necessary)"
 }
 
-toggle_dashboard() {}
+toggle_dashboard() {
+    if [[ -f "$DASHBOARD_FILE" ]]; then
+        close_dash
+    else
+        open_dash
+    fi
+}
 
-start() {}
+start() {
+    if [[ -f "$PID_FILE" ]]; then
+        log_msg "Monitoring already running"
+        return
+    fi
+    
+    log_msg "Starting workspace monitoring"
+    
+    (
+        empty_since=0
+        
+        while true; do
+            local current_desktop=$(bspc query -D -d focused --names)
+            if [[ -f "$DASHBOARD_FILE" && -n "$last_desktop" && "$current_desktop" != "$last_desktop" ]]; then
+                empty_since=0
+                log_msg "Workspace changed (from $last_desktop to $current_desktop)"
+                log_msg "Closing dashboard..."
+                close_dash
+                sleep 1
+            fi
+            
+            if idling; then
+                if [[ $empty_since -eq 0 ]]; then
+                    empty_since=$(date +%s)
+                    log_msg "Workspace empty, starting timer"
+                else
+                    current_time=$(date +%s)
+                    elapsed=$((current_time - empty_since))
+                    
+                    if [[ $elapsed -ge $IDLE_TIMEOUT && ! -f "$DASHBOARD_FILE" ]]; then
+                        log_msg "Workspace empty for $elapsed seconds, launching dashboard"
+                        open_dash
+                    fi
+                fi
+            else
+                if [[ -f "$DASHBOARD_FILE" ]]; then
+                    local window_ids=$(bspc query -N -d focused -n .window)
+                    for window_id in $window_ids; do
+                        local window_class=$(xprop -id "$window_id" WM_CLASS 2>/dev/null | grep -o '"[^"]*"' | tail -n 1 | tr -d '"')
+                        if [[ "$window_class" != "eww" ]]; then
+                            log_msg "Non-eww window ($window_class) detected, closing dashboard"
+                            close_dash
+                        fi
+                    done
+                else     
+                    if [[ $empty_since -ne 0 ]]; then
+                        log_msg "Workspace no longer empty, resetting timer"
+                        empty_since=0
+                    fi
+                fi
+            fi
+            
+            sleep 0.3
+        done
+    ) &
+    
+    echo $! > "$PID_FILE"
+    log_msg "Monitoring started with PID $(cat $PID_FILE)"
+}
 
-stop() {}
+stop() {
+    if [[ -f "$PID_FILE" ]]; then
+        local pid=$(cat "$PID_FILE")
+        kill "$pid" 2>/dev/null
+        rm -f "$PID_FILE"
+        log_msg "Monitoring stopped (PID: $pid)"
+        return 1
+    else
+        log_msg "No monitoring process found"
+        return 0
+    fi
+}
 
 case "$1" in
     --toggle)

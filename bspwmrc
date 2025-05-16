@@ -8,7 +8,6 @@
 
 ## Bspwm config directory
 BSPDIR="$HOME/.config/bspwm"
-
 ## Export bspwm/bin dir to PATH
 export PATH="${PATH}:$BSPDIR/scripts"
 export XDG_CURRENT_DESKTOP='bspwm'
@@ -29,7 +28,7 @@ BSPWM_PFC='#5f5f5f'
 
 ## Bspwm appearance
 BSPWM_BORDER='1'
-BSPWM_GAP='4'
+BSPWM_GAP='5'
 BSPWM_SRATIO='0.50'
 
 ## Configurations --------------------------------------------#
@@ -170,13 +169,6 @@ bspc rule -a Spotify state=fullscreen follow=on focus=on desktop='^7'
 
 # Kill if already running
 killall -9 xsettingsd sxhkd dunst ksuperkey xfce4-power-manager bspc eww
-
-# Make sure our window watch script is executable
-chmod +x "$BSPDIR/scripts/bspwindow_watch"
-
-# Start the dashboard watcher
-systemctl --user restart bspwm-dashboard.service
-
 # Lauch xsettingsd daemon
 xsettingsd --config="$BSPDIR"/xsettingsd &
 
@@ -198,6 +190,10 @@ xfce4-power-manager &
 # Fix cursor
 xsetroot -cursor_name left_ptr
 
+# Todo:  assign env
+# betterlockscreen -u /home/dej/archlinux-data/wallpaper/wallpapers-172.jpeg
+
+
 # Restore wallpaper
 bash ~/.fehbg
 
@@ -209,3 +205,8 @@ bspbar
 bspcomp
 bspdunst
 bspfloat &
+
+sleep 3
+bspdashboard --stop
+sleep 10
+bspdashboard --start
