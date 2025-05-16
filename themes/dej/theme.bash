@@ -1,9 +1,4 @@
-# ------------------------------------------------------------------------------
-# Copyright (C) 2020-2024 Aditya Shakya <adi1090x@gmail.com>
-#
-# Hack Theme
-# ------------------------------------------------------------------------------
-
+# TODO: Integrate with pywal
 # Colors
 background='#01161b'
 foreground='#66FFFF'

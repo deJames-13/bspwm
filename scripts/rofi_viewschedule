@@ -2,7 +2,7 @@
 
 # Import Current Theme
 DIR="$HOME/.config/bspwm"
-STYLE="dej"
+STYLE="dej-gray"
 RASI="$DIR/themes/$STYLE/rofi/viewschedule.rasi"
 
 SCHEDULE_JSON="$DIR/themes/$STYLE/schedule.json"

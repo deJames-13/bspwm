@@ -21,38 +21,38 @@ IntensityAmount=0
 IntensityEffect=0
 
 [Colors:Button]
-BackgroundAlternate=2,27,32
+BackgroundAlternate=0,123,130
 BackgroundNormal=1,22,27
-DecorationFocus=0,123,130
-DecorationHover=4,172,181
-ForegroundActive=102,255,255
-ForegroundInactive=163,181,184
+DecorationFocus=4,172,181
+DecorationHover=5,187,197
+ForegroundActive=163,181,184
+ForegroundInactive=4,172,181
 ForegroundLink=6,204,215
-ForegroundNegative=255,0,0
-ForegroundNeutral=255,255,0
-ForegroundNormal=102,255,255
-ForegroundPositive=0,255,0
+ForegroundNegative=4,172,181
+ForegroundNeutral=6,204,215
+ForegroundNormal=163,181,184
+ForegroundPositive=5,187,197
 ForegroundVisited=5,187,197
 
 [Colors:Complementary]
-BackgroundAlternate=1,22,27
-BackgroundNormal=1,15,20
-DecorationFocus=0,123,130
-DecorationHover=4,172,181
-ForegroundActive=102,255,255
-ForegroundInactive=163,181,184
+BackgroundAlternate=0,123,130
+BackgroundNormal=1,22,27
+DecorationFocus=4,172,181
+DecorationHover=5,187,197
+ForegroundActive=163,181,184
+ForegroundInactive=4,172,181
 ForegroundLink=6,204,215
-ForegroundNegative=255,0,0
-ForegroundNeutral=255,255,0
-ForegroundNormal=102,255,255
-ForegroundPositive=0,255,0
+ForegroundNegative=4,172,181
+ForegroundNeutral=6,204,215
+ForegroundNormal=163,181,184
+ForegroundPositive=5,187,197
 ForegroundVisited=5,187,197
 
 [Colors:Header]
-BackgroundAlternate=1,22,27
-BackgroundNormal=1,15,20
+BackgroundAlternate=0,123,130
+BackgroundNormal=1,22,27
 DecorationFocus=0,123,130
-DecorationHover=4,172,181
+DecorationHover=5,187,197
 ForegroundActive=102,255,255
 ForegroundInactive=163,181,184
 ForegroundLink=6,204,215
@@ -64,9 +64,9 @@ ForegroundVisited=5,187,197
 
 [Colors:Header][Inactive]
 BackgroundAlternate=1,22,27
-BackgroundNormal=1,15,20
+BackgroundNormal=1,22,27
 DecorationFocus=0,123,130
-DecorationHover=4,172,181
+DecorationHover=5,187,197
 ForegroundActive=102,255,255
 ForegroundInactive=163,181,184
 ForegroundLink=6,204,215
@@ -80,7 +80,7 @@ ForegroundVisited=5,187,197
 BackgroundAlternate=0,123,130
 BackgroundNormal=0,123,130
 DecorationFocus=0,123,130
-DecorationHover=4,172,181
+DecorationHover=5,187,197
 ForegroundActive=102,255,255
 ForegroundInactive=163,181,184
 ForegroundLink=6,204,215
@@ -92,9 +92,9 @@ ForegroundVisited=5,187,197
 
 [Colors:Tooltip]
 BackgroundAlternate=1,22,27
-BackgroundNormal=1,15,20
+BackgroundNormal=1,22,27
 DecorationFocus=0,123,130
-DecorationHover=4,172,181
+DecorationHover=5,187,197
 ForegroundActive=102,255,255
 ForegroundInactive=163,181,184
 ForegroundLink=6,204,215
@@ -106,9 +106,9 @@ ForegroundVisited=5,187,197
 
 [Colors:View]
 BackgroundAlternate=1,22,27
-BackgroundNormal=1,15,20
+BackgroundNormal=1,22,27
 DecorationFocus=0,123,130
-DecorationHover=4,172,181
+DecorationHover=5,187,197
 ForegroundActive=102,255,255
 ForegroundInactive=163,181,184
 ForegroundLink=6,204,215
@@ -120,9 +120,9 @@ ForegroundVisited=5,187,197
 
 [Colors:Window]
 BackgroundAlternate=1,22,27
-BackgroundNormal=1,15,20
+BackgroundNormal=1,22,27
 DecorationFocus=0,123,130
-DecorationHover=4,172,181
+DecorationHover=5,187,197
 ForegroundActive=102,255,255
 ForegroundInactive=163,181,184
 ForegroundLink=6,204,215
@@ -133,7 +133,7 @@ ForegroundPositive=0,255,0
 ForegroundVisited=5,187,197
 
 [General]
-ColorSchemeHash=75e9f34596e950b9f1526f047439aace1e58987a
+ColorSchemeHash=70bbfd163aeead1b10f789e1acd29513
 
 [Icons]
 Theme=Hack
@@ -142,8 +142,8 @@ Theme=Hack
 widgetStyle=qt6ct-style
 
 [WM]
-activeBackground=1,15,20
-activeBlend=1,15,20
+activeBackground=1,22,27
+activeBlend=1,22,27
 activeForeground=102,255,255
 inactiveBackground=1,22,27
 inactiveBlend=1,22,27

@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+EWW_BIN="eww -c $HOME/.config/eww/dashboard"
+DASHBOARD_FILE="$HOME/.cache/eww_launch.dashboard"
+POLYBAR_SCRIPT="$HOME/.config/polybar/launch.sh"
+PID_FILE="/tmp/bspwindow_watch.pid"
+IDLE_TIMEOUT=10 
+
+log_msg() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "/tmp/bspwindow_watch.log"
+}
+
+check_windows() {
+    local current_desktop=$(bspc query -D -d focused --names)
+    local windows_count=$(bspc query -N -d ${current_desktop} -n .window | wc -l)
+    echo "${windows_count}"
+}
+
+check_workspace() {
+    local window_count=$(check_windows)
+    local current_desktop=$(bspc query -D -d focused --names)
+    echo "$window_count:$current_desktop"
+}
+
+idling() {}
+
+open_dash() {
+    /home/dej/.config/bspwm/scripts/bspbar hide
+    $HOME/.config/eww/dashboard/launch_dashboard
+}
+close_dash() {
+    ${EWW_BIN} close-all
+    rm -f "$DASHBOARD_FILE"
+    /home/dej/.config/bspwm/scripts/bspbar show
+}
+
+toggle_dashboard() {}
+
+start() {}
+
+stop() {}
+
+case "$1" in
+    --toggle)
+        toggle_dashboard
+        ;;
+    --check)
+        check_windows
+        ;;
+    --start)
+        start
+        ;;
+    --stop)
+        stop
+        ;;
+    *)
+        toggle_dashboard
+        ;;
+esac

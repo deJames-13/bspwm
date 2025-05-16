@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+## Copyright (C) 2020-2024 Aditya Shakya <adi1090x@gmail.com>
+
+# Import Current Theme
+DIR="$HOME/.config/bspwm"
+STYLE="dej-gray"
+RASI="$DIR/themes/$STYLE/rofi/streams.rasi"
+
+# Read the list of streamers from the file
+STREAMERS_FILE="$DIR/themes/$STYLE/streams"
+STREAMERS=$(cat "$STREAMERS_FILE")
+
+# Use rofi to select a streamer
+SELECTED=$(echo -e "$STREAMERS" | rofi -dmenu -p "Stream" -theme ${RASI})
+
+# If a streamer was selected, check if they're live before opening the stream
+if [ -n "$SELECTED" ]; then
+    # Default quality - can be changed to your preference
+    QUALITY="best"
+    
+    # Check if the streamer is live with streamlink
+    if streamlink --stream-types=all --stream-sorting-excludes=<stream-type> "https://twitch.tv/$SELECTED" $QUALITY --json --player mpv 2>/dev/null | grep -q "error"; then
+        # Streamer is not live, show notification
+        notify-send "Stream Offline" "$SELECTED is currently not live" -i video-television
+    else
+        # Streamer is live, launch with streamlink
+        streamlink "https://twitch.tv/$SELECTED" "$QUALITY" --player mpv &
+        
+        # Show notification
+        notify-send "Opening Stream" "Loading $SELECTED at $QUALITY quality" -i video-television
+    fi
+fi

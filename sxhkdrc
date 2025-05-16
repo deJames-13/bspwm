@@ -4,9 +4,24 @@
 
 ##---------- Custom ----------##
 
+# Eww Dashboard
+super + d
+	~/.config/eww/dashboard/launch_dashboard open
+super + shift + d
+	~/.config/eww/dashboard/launch_dashboard close
+super + ctrl + d
+	~/.config/eww/dashboard/launch_dashboard kill
+
 # Keybinding to show all keybindings
 super + alt + c
     code
+
+# Show bluetooth
+super + alt + t
+    ~/.config/bspwm/scripts/rofi_streamlink &
+# Show bluetooth
+super + b
+    blueman-manager &
 
 # Show clipboard
 super + v
@@ -32,7 +47,7 @@ super + ctrl + b
 
 # Terminal (alacritty)
 super + shift + x 
-	bspterm --float
+	bspkitty --float
 
 # Terminal (alacritty)
 super + alt + x 
@@ -40,7 +55,7 @@ super + alt + x
 
 # Terminal (alacritty)
 super + Return
-	bspterm
+	bspkitty
 
 # Terminal (floating)
 super + shift + Return
@@ -65,8 +80,8 @@ alt + F2
 	rofi_runner
 
 # Rofi Menus/Applets: 
-super + {b,m,n,r,s,t,w,x}
-	{rofi_bluetooth,rofi_music,nmd,rofi_asroot,rofi_screenshot,rofi_themes,rofi_windows,rofi_powermenu}
+super + {m,n,r,s,t,w,x}
+	{rofi_music,nmd,rofi_asroot,rofi_screenshot,rofi_themes,rofi_windows,rofi_powermenu}
 
 ##---------- Applications ----------##
 
@@ -140,7 +155,7 @@ super + {_,shift + }c
 
 # Close App
 super + q
-    bspc node -k
+    bspc node -c
 
 # kill window
 ctrl + alt + Escape
