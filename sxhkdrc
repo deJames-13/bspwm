@@ -4,21 +4,26 @@
 
 ##---------- Custom ----------##
 
-# Eww Dashboard
+# Open dashboard
 super + d
 	~/.config/eww/dashboard/launch_dashboard open
+
+# Close dashboard
 super + shift + d
 	~/.config/eww/dashboard/launch_dashboard close
+
+# Kill dashboard
 super + ctrl + d
 	~/.config/eww/dashboard/launch_dashboard kill
 
-# Keybinding to show all keybindings
+# Open code
 super + alt + c
     code
 
 # Show bluetooth
 super + alt + t
     ~/.config/bspwm/scripts/rofi_streamlink &
+
 # Show bluetooth
 super + b
     blueman-manager &
