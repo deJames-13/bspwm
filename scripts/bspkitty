@@ -7,6 +7,13 @@
 # bspwm directory
 DIR="$HOME/.config/bspwm"
 CONFIG="$DIR/kitty/kitty.conf"
+FETCH="fastfetch -c $HOME/.config/fastfetch/config.jsonc -l ~/Pictures/web/war5.jpg \
+	   --logo-type kitty \
+	   --logo-padding-top 3 \
+	   --logo-width 26"
+
+
+
 
 if [ "$1" == "--float" ]; then
 	kitty --class 'kitty-float' --config "$CONFIG"
@@ -16,6 +23,12 @@ elif [ "$1" == "--full" ]; then
 		  --override 'window_padding_width=30' \
 		  --override 'font_size=14' \
 		  --override 'background_opacity=0.95'
+elif [ "$1" == "--fastfetch" ]; then
+	if ! xdo id -N kitty-fastfetch > /dev/null 2>&1; then
+		kitty --class 'kitty-fastfetch' --config "$CONFIG" bash -c "$FETCH; exec zsh"
+	else
+		bspc desktop -f '^1' 
+	fi
 else
 	kitty --config "$CONFIG" ${@}
 fi

@@ -51,8 +51,9 @@ default_workspaces() {
 two_monitors_workspaces() {
   # change these values according to your system
   # you can use `xrandr -q` to get the names of monitors
+  # EXTERNAL_MONITOR="HDMI-A-0"
+  EXTERNAL_MONITOR="HDMI1"
   INTERNAL_MONITOR="eDP"
-  EXTERNAL_MONITOR="HDMI-A-0"
   if [[ $(xrandr -q | grep "${EXTERNAL_MONITOR} connected") ]]; then
     bspc monitor "$EXTERNAL_MONITOR" -d '' '' '' ''
     bspc monitor "$INTERNAL_MONITOR" -d '' '' '' ''
@@ -66,8 +67,8 @@ two_monitors_workspaces() {
 three_monitors_workspaces() {
   # again, change these values accordingly
   MONITOR_1="eDP"
-  MONITOR_2="HDMI-A-0"
-  MONITOR_3="HDMI-A-1"
+  MONITOR_2="HDMI1" # HDMI-A-0
+  MONITOR_3="HDMI-A-0" # HDMI-A-1
   bspc monitor "$MONITOR_1" -d '' ''
   bspc monitor "$MONITOR_2" -d '' '' ''
   bspc monitor "$MONITOR_3" -d '' '' ''
@@ -167,10 +168,12 @@ declare -a floating=(alacritty-float kitty-float Pcmanfm Thunar Onboard Yad 'Fir
 for i in ${floating[@]}; do
   bspc rule -a $i state=floating follow=on focus=on
 done
-
 bspc rule -a Conky state=floating manage=off
 bspc rule -a stalonetray state=floating manage=off
 bspc rule -a Gpaste-ui state=floating follow=on focus=on
+
+bspc rule -a "Eww" desktop='^1' follow=on focus=on state=floating rectangle=623x326+57+382 locked=on private=on layer=below
+
 ## Autostart -------------------------------------------------#
 
 # Kill if already running
@@ -212,7 +215,9 @@ bspcomp
 bspdunst
 bspfloat &
 
-sleep 3
-bspdashboard --stop
-sleep 10
-bspdashboard --start
+{
+  sleep 3
+  bspdashboard --stop
+  sleep 3
+  bspdashboard --start
+} & 
