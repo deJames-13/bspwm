@@ -1,0 +1,224 @@
+#!/usr/bin/env bash
+
+# Check if Firefox command exists
+PRELOAD_CLASS="preload-firefox"
+WINDOW_ID=""
+WATCHID=""
+PID_FILE="$HOME/.cache/bspwm/preload-firefox-pid"
+WID_FILE="$HOME/.cache/bspwm/preload-firefox-wid"
+WATCHID_FILE="$HOME/.cache/bspwm/preload-watch-wid"
+
+preload_firefox () {
+    if command -v firefox &> /dev/null; then
+    echo "Firefox is installed"
+    else
+        echo "Firefox is not installed"
+        exit 1
+    fi
+
+    # Check if Firefox with class preload-firefox is already running
+    if command -v wmctrl &> /dev/null; then
+        if wmctrl -lx | grep -i ""$PRELOAD_CLASS"" > /dev/null; then
+            echo "Firefox with class "$PRELOAD_CLASS" is already running"
+            exit 0
+        fi
+    else
+        # Fallback to checking process arguments
+        if pgrep -f "firefox.*--class "$PRELOAD_CLASS"" > /dev/null; then
+            echo "Firefox with class "$PRELOAD_CLASS" is already running"
+            exit 0
+        fi
+    fi
+
+    # Launch Firefox and save its PID
+    firefox --new-instance --class "$PRELOAD_CLASS" -P default-release &> /dev/null &
+    FIREFOX_PID=$!
+    echo "Firefox preload started with PID: $FIREFOX_PID"
+    
+    # Give Firefox some time to properly initialize the window
+    sleep 2
+    
+    # Try to get window ID using xdotool
+    if command -v xdotool &> /dev/null; then
+        WINDOW_IDS=$(xdotool search --class "$PRELOAD_CLASS" 2>/dev/null)
+        if [ -n "$WINDOW_IDS" ]; then
+            echo "Firefox window IDs: $WINDOW_IDS"
+        else
+            echo "Could not find window ID with xdotool. Firefox may still be initializing."
+        fi
+    fi
+    
+    # Try to get window ID using wmctrl
+    if command -v wmctrl &> /dev/null; then
+        WMCTRL_INFO=$(wmctrl -lx | grep -i "$PRELOAD_CLASS")
+        if [ -n "$WMCTRL_INFO" ]; then
+            echo "Window info from wmctrl:"
+            echo "$WMCTRL_INFO"
+            WINDOW_ID=$(echo "$WMCTRL_INFO" | awk '{print $1}')
+            echo "Window ID: $WINDOW_ID"
+        else
+            echo "Could not find window ID with wmctrl. Firefox may still be initializing."
+        fi
+    fi
+    
+    # Save window information for later use
+    CACHE_DIR="$HOME/.cache/bspwm"
+    mkdir -p "$CACHE_DIR"
+    echo "$FIREFOX_PID" > "$CACHE_DIR/preload-firefox-pid"
+    
+    if [ -n "$WINDOW_ID" ]; then
+        echo "$WINDOW_ID" > "$CACHE_DIR/preload-firefox-wid"
+    fi
+}
+
+# Function to get the window ID of the preloaded Firefox
+get_preloaded_firefox_id() {
+    
+    if [ -f "$WID_FILE" ]; then
+        WINDOW_ID=$(cat "$WID_FILE")
+        if wmctrl -l | grep -q "$WINDOW_ID"; then
+            echo "Window ID: $WINDOW_ID"
+            return 0
+        fi
+    fi
+    
+    if [ -f "$PID_FILE" ]; then
+        PID=$(cat "$PID_FILE")
+        if ps -p "$PID" > /dev/null; then
+            echo "Firefox process is running with PID: $PID"
+            
+            # Try with xdotool
+            if command -v xdotool &> /dev/null; then
+                WINDOW_IDS=$(xdotool search --pid "$PID" 2>/dev/null)
+                if [ -n "$WINDOW_IDS" ]; then
+                    echo "Firefox window IDs: $WINDOW_IDS"
+                    echo "$WINDOW_IDS" | head -1 > "$WID_FILE"
+                    return 0
+                fi
+            fi
+            
+            # Try with wmctrl and xprop if xdotool fails
+            if command -v wmctrl &> /dev/null && command -v xprop &> /dev/null; then
+                echo "Trying to find window ID using wmctrl and _NET_WM_PID..."
+                wmctrl -lp | grep "$PID" | while read -r wid rest; do
+                    echo "Found window with ID: $wid for PID: $PID"
+                    echo "$wid" > "$WID_FILE"
+                    return 0
+                done
+            fi
+        else
+            echo "Firefox process with PID $PID is not running"
+        fi
+    fi
+    
+    echo "Could not find window ID for preloaded Firefox"
+    return 1
+}
+
+# Function to get only the raw window ID (no additional text)
+get_raw_window_id() {
+    if [ -f "$WID_FILE" ]; then
+        WINDOW_ID=$(cat "$WID_FILE")
+        if wmctrl -l | grep -q "$WINDOW_ID"; then
+            echo "$WINDOW_ID"
+            return 0
+        fi
+    fi
+    
+    if [ -f "$PID_FILE" ]; then
+        PID=$(cat "$PID_FILE")
+        if ps -p "$PID" > /dev/null; then
+            # Try with wmctrl and xprop first
+            if command -v wmctrl &> /dev/null; then
+                WID=$(wmctrl -lp | grep "$PID" | awk '{print $1}' | head -1)
+                if [ -n "$WID" ]; then
+                    echo "$WID"
+                    return 0
+                fi
+            fi
+            
+            # Try with xdotool
+            if command -v xdotool &> /dev/null; then
+                WINDOW_ID=$(xdotool search --pid "$PID" 2>/dev/null | head -1)
+                if [ -n "$WINDOW_ID" ]; then
+                    # Convert decimal to hex if necessary
+                    printf "0x%x" "$WINDOW_ID"
+                    return 0
+                fi
+            fi
+        fi
+    fi
+    
+    return 1
+}
+
+setup () {
+    preload_firefox 
+    if [[ -n $WINDOW_ID ]]; then
+        bspc node $WINDOW_ID -d '^9'
+        bspc node $WINDOW_ID -g hidden
+        bspc node $WINDOW_ID -g locked
+        bspc node $WINDOW_ID -g private
+    fi 
+}
+
+watch_preloads(){
+    
+    if [ -f "$WATCHID_FILE" ]; then
+        WATCHID=(cat $WATCHID_FILE)
+        if ps -p "$WATCHID" > /dev/null; then
+            echo "Watch $PRELOAD_CLASS is running!"
+            exit 0;
+        fi
+    fi
+
+    while true; do
+        sleep 0.5
+        if ! pgrep -f "firefox.*--class "$PRELOAD_CLASS"" > /dev/null; then
+            echo "Firefox with class "$PRELOAD_CLASS" is stopped running"
+            exit 0
+        fi
+        local current_desktop=$(bspc query -D -d focused --names)
+        if [[ -n $WINDOW_ID ]]; then
+            local current_windows=$(bspc query -N -d focused -n .window)
+            for window_id in $current_windows; do
+                local window_class=$(xprop -id "$window_id" WM_CLASS 2>/dev/null | grep -o '"[^"]*"' | tail -n 1 | tr -d '"')
+                if [[ $window_id != $WINDOW_ID && "$current_desktop" != "" && "$window_class" == "$PRELOAD_CLASS" ]]; then
+                    echo "$window_class: $window_id moved "
+                    bspc node $window_id -d '^3' --follow
+                fi
+            done
+
+        fi
+    done
+}
+
+
+# If argument is "get-id", return the window ID instead of launching Firefox
+if [ "$1" = "get-id" ]; then
+    get_preloaded_firefox_id
+    exit $?
+fi
+
+# If argument is "-id", return only the raw window ID
+if [ "$1" = "-id" ]; then
+    get_raw_window_id
+    exit $?
+fi
+
+if [ "$1" = "nosetup" ]; then
+    preload_firefox 
+    exit $?
+fi
+
+if [ "$1" = "watch" ]; then
+    setup
+    watch_preloads &
+    WATCHID=$!
+    echo "$WATCHID" > "$WATCHID_FILE"
+    exit $?
+fi
+
+setup 
+
+

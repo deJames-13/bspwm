@@ -17,7 +17,7 @@ super + ctrl + d
 	~/.config/eww/dashboard/launch_dashboard kill
 
 # Open code
-super + alt + c
+super + c
     code
 
 # Show bluetooth
@@ -64,7 +64,7 @@ super + Return
 
 # Terminal (kitty)
 super + F1
-	/home/dej/.config/eww/ewwfetch/launch
+/home/dej/.config/eww/ewwfetch/launch
 
 ##---------- Rofi Launcher & Menus ----------##
 
@@ -147,12 +147,8 @@ super + shift + h
 	bspwinmask
 
 # Close App
-super + {_,shift + }c
+super + {_,shift + }q
 	bspc node -{c,k}
-
-# Close App
-super + q
-    bspc node -c
 
 # kill window
 ctrl + alt + Escape

@@ -43,7 +43,7 @@ BSPWM_SRATIO='0.50'
 default_workspaces() {
   for monitor in $(xrandr -q | grep -w 'connected' | cut -d' ' -f1); do
     # '' '' '' ''
-    bspc monitor "$monitor" -d '' '' '' '' '' '' '' ''
+    bspc monitor "$monitor" -d '' '' '' '' '' '' '' '' ''
   done
 }
 
@@ -53,21 +53,21 @@ two_monitors_workspaces() {
   # you can use `xrandr -q` to get the names of monitors
   # EXTERNAL_MONITOR="HDMI-A-0"
   EXTERNAL_MONITOR="HDMI1"
-  INTERNAL_MONITOR="eDP"
+  INTERNAL_MONITOR="eDP1"
   if [[ $(xrandr -q | grep "${EXTERNAL_MONITOR} connected") ]]; then
     bspc monitor "$EXTERNAL_MONITOR" -d '' '' '' ''
-    bspc monitor "$INTERNAL_MONITOR" -d '' '' '' ''
+    bspc monitor "$INTERNAL_MONITOR" -d '' '' '' '' ''
     bspc wm -O "$EXTERNAL_MONITOR" "$INTERNAL_MONITOR"
   else
-    bspc monitor "$INTERNAL_MONITOR" -d '' '' '' '' '' '' '' ''
+    bspc monitor "$INTERNAL_MONITOR" -d '' '' '' '' '' '' '' '' ''
   fi
 }
 
 ## Three Monitors Setup (Laptop and two external monitor, 3-2-3 workspaces)
 three_monitors_workspaces() {
   # again, change these values accordingly
-  MONITOR_1="eDP"
-  MONITOR_2="HDMI1" # HDMI-A-0
+  MONITOR_1="eDP1"
+  MONITOR_2="HDMI1"    # HDMI-A-0
   MONITOR_3="HDMI-A-0" # HDMI-A-1
   bspc monitor "$MONITOR_1" -d '' ''
   bspc monitor "$MONITOR_2" -d '' '' ''
@@ -151,7 +151,6 @@ for i in ${media[@]}; do
   bspc rule -a $i desktop='^7' state=floating follow=on focus=on
 done
 
-
 ## 8 > system (always open system apps on workspace-8)
 bspc rule -a 'VirtualBox Manager' desktop='^8' follow=on focus=on
 bspc rule -a GParted desktop='^8' follow=on focus=on
@@ -171,13 +170,12 @@ done
 bspc rule -a Conky state=floating manage=off
 bspc rule -a stalonetray state=floating manage=off
 bspc rule -a Gpaste-ui state=floating follow=on focus=on
-
 bspc rule -a "Eww" desktop='^1' follow=on focus=on state=floating rectangle=623x326+57+382 locked=on private=on layer=below
 
 ## Autostart -------------------------------------------------#
 
 # Kill if already running
-killall -9 xsettingsd sxhkd dunst ksuperkey xfce4-power-manager bspc eww
+killall -9 xsettingsd sxhkd dunst ksuperkey xfce4-power-manager bspc eww firefox
 
 # Lauch xsettingsd daemon
 xsettingsd --config="$BSPDIR"/xsettingsd &
@@ -204,7 +202,7 @@ xsetroot -cursor_name left_ptr
 bash ~/.fehbg
 
 # Restore betterlockscreen
-betterlockscreen -u $WALLPAPER
+# betterlockscreen -u $WALLPAPER &
 
 # Start mpd
 exec mpd &
@@ -215,9 +213,12 @@ bspcomp
 bspdunst
 bspfloat &
 
+## Custom Preload Scripts -------------------------------------------------#
 {
   sleep 3
   bspdashboard --stop
   sleep 3
   bspdashboard --start
-} & 
+} &
+## Wait bspwm process
+bspfirefoxpreload watch &

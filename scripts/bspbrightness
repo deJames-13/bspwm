@@ -6,6 +6,8 @@
 
 # Icons
 iDIR='/usr/share/archcraft/icons/dunst'
+INC=1
+DEC=1
 
 # Graphics card
 CARD=`ls /sys/class/backlight | head -n 1`
@@ -46,7 +48,7 @@ notify_bl() {
 # Increase brightness
 inc_backlight() {
 	if [[ "$CARD" == *"intel_"* ]]; then
-		xbacklight -inc 10 && notify_bl
+		xbacklight -inc $INC && notify_bl
 	else
 		light -A 5 && notify_bl
 	fi
@@ -55,7 +57,7 @@ inc_backlight() {
 # Decrease brightness
 dec_backlight() {
 	if [[ "$CARD" == *"intel_"* ]]; then
-		xbacklight -dec 10 && notify_bl
+		xbacklight -dec $DEC && notify_bl
 	else
 		light -U 5 && notify_bl
 	fi

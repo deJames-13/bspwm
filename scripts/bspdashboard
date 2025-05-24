@@ -4,8 +4,10 @@ EWW_BIN="eww -c $HOME/.config/eww/dashboard"
 DASHBOARD_FILE="$HOME/.cache/eww_launch.dashboard"
 POLYBAR_SCRIPT="$HOME/.config/polybar/launch.sh"
 PID_FILE="/tmp/bspwindow_watch.pid"
-IDLE_TIMEOUT=10
+TOGGLE_FLAG_FILE="/tmp/bspdashboard_toggled.flag"
+IDLE_TIMEOUT=60
 last_desktop=$(bspc query -D -d focused --names)
+empty_since=0
 
 log_msg() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "/tmp/bspwindow_watch.log"
@@ -51,6 +53,8 @@ close_dash() {
 
 toggle_dashboard() {
     if [[ -f "$DASHBOARD_FILE" ]]; then
+        touch "$TOGGLE_FLAG_FILE"
+        log_msg "Dashboard closed via toggle, creating flag file"
         close_dash
     else
         open_dash
@@ -66,16 +70,23 @@ start() {
     log_msg "Starting workspace monitoring"
     
     (
-        empty_since=0
-        
         while true; do
             local current_desktop=$(bspc query -D -d focused --names)
-            if [[ -f "$DASHBOARD_FILE" && -n "$last_desktop" && "$current_desktop" != "$last_desktop" ]]; then
-                empty_since=0
+            if [[ -n "$last_desktop" && "$current_desktop" != "$last_desktop" ]]; then
                 log_msg "Workspace changed (from $last_desktop to $current_desktop)"
-                log_msg "Closing dashboard..."
-                close_dash
-                sleep 1
+
+                if [[ -f "$DASHBOARD_FILE" ]]; then
+                    log_msg "Closing dashboard..."
+                    empty_since=0
+                    close_dash
+                    sleep 1
+                elif [[ -f "$TOGGLE_FLAG_FILE" ]]; then
+                    empty_since=0
+                    rm -f "$TOGGLE_FLAG_FILE"
+                    log_msg "Removing toggle flag file"
+                fi
+                last_desktop=$current_desktop
+
             fi
             
             if idling; then
@@ -86,7 +97,7 @@ start() {
                     current_time=$(date +%s)
                     elapsed=$((current_time - empty_since))
                     
-                    if [[ $elapsed -ge $IDLE_TIMEOUT && ! -f "$DASHBOARD_FILE" ]]; then
+                    if [[ $elapsed -ge $IDLE_TIMEOUT && ! -f "$DASHBOARD_FILE" && ! -f "$TOGGLE_FLAG_FILE" ]]; then
                         log_msg "Workspace empty for $elapsed seconds, launching dashboard"
                         open_dash
                     fi
@@ -105,6 +116,8 @@ start() {
                     if [[ $empty_since -ne 0 ]]; then
                         log_msg "Workspace no longer empty, resetting timer"
                         empty_since=0
+                        rm -f "$TOGGLE_FLAG_FILE"
+                        log_msg "Removing toggle flag file"
                     fi
                 fi
             fi
